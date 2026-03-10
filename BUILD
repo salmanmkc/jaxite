@@ -25,9 +25,19 @@ licenses(["notice"])
 
 exports_files(["LICENSE"])
 
-# a single-source build dependency that gives the whole (non-test) jaxite
-# source tree; note we chose the style of putting all test rules below, because
-# glob does not recurse into subdirectories with BUILD files in them.
+py_library(
+    name = "jaxite_ckks",
+    srcs = glob(
+        ["jaxite_ckks/*.py"],
+        exclude = ["jaxite_ckks/*_test.py"],
+    ),
+    deps = [
+        "@jaxite_deps_jax//:pkg",
+        "@jaxite_deps_jaxlib//:pkg",
+        "@jaxite_deps_numpy//:pkg",
+    ],
+)
+
 py_library(
     name = "jaxite",
     srcs = glob(
@@ -35,10 +45,12 @@ py_library(
         exclude = [
             "**/*_test.py",
             "**/test_util.py",
+            "jaxite_ckks/*",
         ],
     ),
     visibility = [":internal"],
     deps = [
+        ":jaxite_ckks",
         # copybara: xprof_analysis_client  # buildcleaner: keep
         # copybara: xprof_session  # buildcleaner: keep
         "@jaxite_deps_gmpy2//:pkg",
@@ -56,7 +68,6 @@ py_library(
     srcs = ["jaxite/jaxite_lib/test_utils.py"],
     deps = [
         ":jaxite",
-        "@jaxite_deps_gmpy2//:pkg",
         "@jaxite_deps_jax//:pkg",
         "@jaxite_deps_jaxlib//:pkg",
     ],
@@ -192,7 +203,6 @@ tpu_test(
         # copybara: xprof_session  # buildcleaner: keep
         "@com_google_absl_py//absl/testing:absltest",
         "@com_google_absl_py//absl/testing:parameterized",
-        "@jaxite_deps_gmpy2//:pkg",
         "@jaxite_deps_jax//:pkg",
         "@jaxite_deps_jaxlib//:pkg",
         "@jaxite_deps_numpy//:pkg",
@@ -211,7 +221,6 @@ tpu_test(
         # copybara: xprof_session  # buildcleaner: keep
         "@com_google_absl_py//absl/testing:absltest",
         "@com_google_absl_py//absl/testing:parameterized",
-        "@jaxite_deps_gmpy2//:pkg",
         "@jaxite_deps_jax//:pkg",
         "@jaxite_deps_jaxlib//:pkg",
         "@jaxite_deps_numpy//:pkg",
@@ -442,7 +451,7 @@ py_test(
     timeout = "moderate",
     srcs = ["jaxite/jaxite_ckks/rns_test.py"],
     deps = [
-        ":jaxite",
+        ":jaxite_ckks",
         ":test_utils",
         "@com_google_absl_py//absl/testing:absltest",
         "@com_google_absl_py//absl/testing:parameterized",
@@ -469,5 +478,22 @@ gpu_tpu_test(
         "@jaxite_deps_jaxlib//:pkg",
         "@jaxite_deps_numpy//:pkg",
         "@jaxite_deps_parameterized//:pkg",
+    ],
+)
+
+cpu_gpu_tpu_test(
+    name = "basis_conversion_test",
+    size = "small",
+    timeout = "moderate",
+    srcs = ["jaxite/jaxite_ckks/basis_conversion_test.py"],
+    shard_count = 10,
+    deps = [
+        ":jaxite_ckks",
+        "@com_google_absl_py//absl/testing:absltest",
+        "@com_google_absl_py//absl/testing:parameterized",
+        "@jaxite_deps_hypothesis//:pkg",
+        "@jaxite_deps_jax//:pkg",
+        "@jaxite_deps_jaxlib//:pkg",
+        "@jaxite_deps_numpy//:pkg",
     ],
 )
